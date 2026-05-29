@@ -9,7 +9,7 @@ import {
 } from "./comment.interface";
 import httpStatus from "http-status";
 import { Comment } from "./comment.model";
-import { Types } from "mongoose";
+import { startSession, Types } from "mongoose";
 import { Post } from "../post/post.model";
 
 const getValidParentCommentId = async (
@@ -17,10 +17,7 @@ const getValidParentCommentId = async (
   postId: string,
 ) => {
   if (!Types.ObjectId.isValid(parentCommentId)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Parent comment not found for this post!",
-    );
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid parentCommentId");
   }
 
   const parentComment = await Comment.findOne({
@@ -30,7 +27,7 @@ const getValidParentCommentId = async (
 
   if (!parentComment) {
     throw new ApiError(
-      httpStatus.BAD_REQUEST,
+      httpStatus.NOT_FOUND,
       "Parent comment not found for this post!",
     );
   }
@@ -72,10 +69,33 @@ const createComment = async (
       payload.postId,
     );
   }
-  const res = await Comment.create(commentData);
-  post.commentsCount = post.commentsCount + 1;
-  await post.save();
-  return res;
+  const session = await startSession();
+
+  try {
+    session.startTransaction();
+
+    const [createdComment] = await Comment.create([commentData], { session });
+    const updateResult = await Post.updateOne(
+      {
+        _id: post._id,
+        isDeleted: { $ne: true },
+      },
+      { $inc: { commentsCount: 1 } },
+      { session },
+    );
+
+    if (updateResult.modifiedCount !== 1) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Post not found!");
+    }
+
+    await session.commitTransaction();
+    return createdComment;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
 };
 
 const getCommentsByPostId = async (postId: string) => {
