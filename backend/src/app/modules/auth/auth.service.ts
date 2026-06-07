@@ -10,8 +10,6 @@ import logger from "../../../utils/logger.util";
 import config from "../../../config";
 import ApiError from "../../../errors/api_error";
 import { IUser } from "../user/user.interface";
-import { USER_STATUS } from "../../../enums/user_status";
-import { SUBSCRIPTION_TYPE } from "../../../enums/subscription_type";
 import { OTPModel } from "../verify_email/otp.model";
 import { RefreshSession } from "./refresh_session.model";
 import { VerifyEmailService } from "../verify_email/verify_email.service";
@@ -20,10 +18,10 @@ import { GamificationService } from "../gamification/gamification.service";
 const googleClient = new OAuth2Client(config.google_client_id);
 
 const validateUserStatus = (status?: string) => {
-  if (status === USER_STATUS.BLOCKED) {
+  if (status === "Blocked") {
     throw new ApiError(httpStatus.FORBIDDEN, "Your account has been blocked.");
   }
-  if (status === USER_STATUS.INACTIVE) {
+  if (status === "Inactive") {
     throw new ApiError(httpStatus.FORBIDDEN, "Your account is inactive.");
   }
 };
@@ -43,9 +41,8 @@ const issueAccessToken = (user: any, expiresIn?: string): string =>
   JwtHelpers.createToken(
     buildClaims(user),
     config.jwt.secret as Secret,
-    expiresIn ?? (config.jwt.expires_in as string)
+    expiresIn || config.jwt.expires_in || "15m"
   );
-
 // Issues a refresh token with a unique jti and records its session for rotation.
 const issueRefreshToken = async (user: any): Promise<string> => {
   const jti = crypto.randomBytes(16).toString("hex");
@@ -94,7 +91,7 @@ const login = async (payload: AuthModel & { rememberMe?: boolean }) => {
 
 const register = async (payload: IUser & { verificationToken?: string; confirmPassword?: string }) => {
   const { email: userEmail, verificationToken } = payload;
-  
+
   if (!verificationToken) {
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
@@ -129,7 +126,7 @@ const register = async (payload: IUser & { verificationToken?: string; confirmPa
   if (isExistUser) {
     throw new ApiError(httpStatus.CONFLICT, "User already exists!");
   }
-  
+
   const { verificationToken: _, ...userPayload } = payload;
   const result = await User.create(userPayload);
 
@@ -225,8 +222,17 @@ const logout = async (token?: string) => {
       config.jwt.refresh_secret as Secret
     );
     const jti = (verified as any).jti as string | undefined;
+    const userId = (verified as any)._id as string | undefined;
+
+    // Revoke the refresh token session.
     if (jti) {
       await RefreshSession.updateOne({ jti }, { revoked: true });
+    }
+
+    // Bump tokenVersion so every outstanding access token for this user is
+    // immediately rejected by auth.middleware.ts, even before its natural expiry.
+    if (userId) {
+      await User.updateOne({ _id: userId }, { $inc: { tokenVersion: 1 } });
     }
   } catch (error) {
     // Ignore invalid tokens on logout; the cookie is cleared either way.
@@ -263,7 +269,7 @@ const googleLogin = async (payload: { token: string }) => {
       const newUser: Partial<IUser> = {
         email: email as string,
         name: (googleName || email || "Google User").slice(0, 100),
-        status: USER_STATUS.ACTIVE,
+        status: "Active",
         subscriptionType: SUBSCRIPTION_TYPE.FREE,
         profile: {
           avatar: (picture as string) || "",
@@ -294,11 +300,11 @@ const googleLogin = async (payload: { token: string }) => {
   } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error(`Google login error: ${errorMessage}`);
-    
+
     if (error instanceof ApiError) {
       throw error;
     }
-    
+
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
       error.message || "Google login failed"
@@ -371,14 +377,14 @@ const resetPassword = async (payload: {
   if (password !== confirmPassword) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Passwords do not match!");
   }
-  
+
   const getPasswordError = (pwd: string) => {
-    if (pwd.length < 8) return "Password must be at least 8 characters long";
-    if (!/[A-Z]/.test(pwd)) return "Password must contain at least one uppercase letter";
-    if (!/[a-z]/.test(pwd)) return "Password must contain at least one lowercase letter";
-    if (!/[0-9]/.test(pwd)) return "Password must contain at least one number";
-    if (!/[^A-Za-z0-9]/.test(pwd)) return "Password must contain at least one special character";
-    return "";
+    if (pwd.length < 8) return "Password must be of at least 8 characters long";
+  if (!/[A-Z]/.test(pwd)) return "Password must contain at least one uppercase letter(A-Z)";
+  if (!/[a-z]/.test(pwd)) return "Password must contain at least one lowercase letter(a-z)";
+  if (!/[0-9]/.test(pwd)) return "Password must contain at least one number(0-9)";
+  if (!/[^A-Za-z0-9]/.test(pwd)) return "Password must contain at least one special character(e.g. !@#$%^&*)";
+    return " ";
   };
   const passwordError = getPasswordError(password);
   if (passwordError) {
@@ -399,7 +405,7 @@ const resetPassword = async (payload: {
   if (!otpRecord) {
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
-      "Invalid or expired verification token. Please verify your email again."
+      "Invalid or expired verification token. Please verify your email again..."
     );
   }
 
@@ -409,7 +415,7 @@ const resetPassword = async (payload: {
   ) {
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
-      "Verification token has expired. Please verify your email again."
+      "Verification token has expired. Please verify your email again..."
     );
   }
 
