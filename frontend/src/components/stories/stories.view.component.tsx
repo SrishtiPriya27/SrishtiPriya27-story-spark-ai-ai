@@ -1335,10 +1335,10 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
               </h1>
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center rounded-full bg-purple-900/60 text-purple-300 border border-purple-700/50 py-1 px-3 text-xs font-semibold">
-                  Γëí╞Æ├ä┬í {selectedStory.tag}
+                🎭 {selectedStory.tag}
                 </span>
                 <span className="inline-flex items-center rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50 py-1 px-3 text-xs font-semibold">
-                  Γëí╞Æ├«├ë {selectedStory.language || "English"}
+                🌐 {selectedStory.language || "English"}
                 </span>
                 {(() => {
                   const mood = detectStoryMood(selectedStory.content);
@@ -1351,7 +1351,7 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                 })()}
                 {selectedStory.emotions && selectedStory.emotions.length > 0 && (
                   <span className="inline-flex items-center rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-700/50 py-1 px-3 text-xs font-semibold">
-                    Γëí╞Æ├┐├¿ {selectedStory.emotions.join(", ")}
+                    💫 {selectedStory.emotions.join(", ")}
                   </span>
                 )}
               </div>
@@ -1471,7 +1471,7 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                   onClick={handleCopyStory}
                   disabled={!selectedStory}
                 >
-                  {isCopied ? "Γ£ô Copied" : "≡ƒôï Copy"}
+                  {isCopied ? "✔ Copied" : "📋 Copy"}
                 </button>
                 <button
                   type="button"
@@ -1479,7 +1479,7 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                   onClick={handleExportPDF}
                   disabled={!selectedStory}
                 >
-                  ≡ƒôä Export PDF
+                  📄 Export PDF
                 </button>
                 <button
                   type="button"
@@ -1487,7 +1487,7 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                   onClick={handleExportMarkdown}
                   disabled={!selectedStory}
                 >
-                  Γ¼ç∩╕Å Export as Markdown
+                  ✏️ Export as Markdown
                 </button>
                 <button
                   type="button"
@@ -1495,15 +1495,14 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                   onClick={() => setShowWorldMap(true)}
                   disabled={!selectedStory}
                 >
-                  Γëí╞Æ├╣ΓòæΓê⌐Γòò├à World Map
+                 🗺️ World Map
                 </button>
                 <button
                   type="button"
                   className="rounded-lg px-4 py-2 bg-fuchsia-700 text-slate-200 font-semibold cursor-pointer hover:bg-fuchsia-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setShowRemix(true)}
                   disabled={!selectedStory}
-                >
-                  Γëí╞Æ├╢├ç Remix
+                >🔀 Remix Γëí╞Æ├╢├ç Remix
                 </button>
                 <button
                   type="button"
@@ -1994,7 +1993,7 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                               <details className="group border border-slate-800 rounded-lg overflow-hidden bg-slate-950/20">
                                 <summary className="list-none flex items-center justify-between p-3 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer select-none">
                                   <span>PREVIEW FULL STORY WITH THIS ENDING</span>
-                                  <span className="transition-transform duration-200 group-open:rotate-180">Γû╝</span>
+                                  <span className="transition-transform duration-200 group-open:rotate-180">▼</span>
                                 </summary>
                                 <div className="p-4 border-t border-slate-800/80 text-xs text-slate-400 leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap">
                                   {currentEndingData.fullStory}
@@ -2054,10 +2053,10 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                       {selectedStory.tag.toUpperCase()}
                     </div>
                     <div className="inline-flex items-center rounded-full bg-indigo-600 py-1 px-3 text-xs font-semibold text-white shadow-sm">
-                      Γëí╞Æ├«├ë {(selectedStory.language || "English").toUpperCase()}
+                    🌐 {(selectedStory.language || "English").toUpperCase()}
                     </div>
                     <div className="inline-flex items-center rounded-full bg-slate-700 py-1 px-2.5 text-xs font-medium text-slate-300 shadow-sm gap-1">
-                      ╬ô├àΓûÆΓê⌐Γòò├à {calculateReadingTime(selectedStory.content)} min read
+                    ⏱️ {calculateReadingTime(selectedStory.content)} min read
                     </div>
                   </div>
                   <div>
