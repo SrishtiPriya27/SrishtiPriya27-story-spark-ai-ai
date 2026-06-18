@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import { store } from "./redux/store.ts";
 import { ThemeProvider } from "./components/theme/theme.context";
@@ -10,10 +11,11 @@ import "./index.css";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-const googleClientId = GOOGLE_CLIENT_ID || "";
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 if (!GOOGLE_CLIENT_ID) {
-  console.warn("VITE_GOOGLE_CLIENT_ID is missing. Google Login disabled.");
+  console.warn("VITE_GOOGLE_CLIENT_ID is missing. Google Login will not function.");
 }
 
 const container = document.getElementById("root");
@@ -24,7 +26,7 @@ if (!container) {
 
 createRoot(container).render(
   <StrictMode>
-    <GoogleOAuthProvider clientId={googleClientId}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || "dummy-client-id"}>
       <Provider store={store}>
         <ThemeProvider>
           <App />
@@ -33,4 +35,3 @@ createRoot(container).render(
     </GoogleOAuthProvider>
   </StrictMode>
 );
-
